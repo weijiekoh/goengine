@@ -1,7 +1,7 @@
 # Goengine
 
 Goengine is a simple implementation of a concurrent shared-state design pattern
-for Go. It is inspired by a [blog
+in Go. It is inspired by a [blog
 post](https://blog.mozilla.org/services/2014/03/12/sane-concurrency-with-go/)
 Rob Miller from Mozilla, as well as the [Reactor
 pattern](https://en.wikipedia.org/wiki/Reactor_pattern).

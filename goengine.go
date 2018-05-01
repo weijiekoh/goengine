@@ -42,7 +42,7 @@ type Engine struct {
 	Reducers       map[ReducerKey]Reducer
 }
 
-// BuildEngine() initialises an Engine
+// BuildEngine() initialises an Engine.
 func BuildEngine() Engine {
 	return Engine{
 		ActionChan:     make(chan Action),
@@ -70,12 +70,12 @@ func (e *Engine) Register(initialState interface{}, rf ReducerFunc) (StateKey, R
 	return sk, rk
 }
 
-// Dispatch() looks up a ReducerFunc to run given a ReducerKey
+// Dispatch() looks up a ReducerFunc to run given a ReducerKey.
 func (e *Engine) dispatch(rk ReducerKey, data interface{}) Response {
 	return e.Reducers[rk].ReducerFunc(e, e.Reducers[rk].StateKey, data)
 }
 
-// Run() launches goroutine to listen for Actions in ActionChan, Dispatch()
+// Run() launches a goroutine to listen for Actions in ActionChan, Dispatch()
 // them, and feed the response into ResponseChan.
 func (e *Engine) Run() {
 	go func() {
@@ -86,17 +86,13 @@ func (e *Engine) Run() {
 	}()
 }
 
-func (e *Engine) feedAction(rk ReducerKey, data interface{}) chan Response {
+// Act() triggers the ReducerFunc denoted by the given reducer key.
+func (e *Engine) Act(rk ReducerKey, data interface{}) (Response, error) {
 	rc := make(chan Response)
 	a := Action{ReducerKey: rk, Data: data, ResponseChan: rc}
 	e.ActionChan <- a
-	return a.ResponseChan
-}
-
-func (e *Engine) Act(rk ReducerKey, data interface{}) (Response, error) {
-	responseChan := e.feedAction(rk, data)
-	for response := range responseChan {
-		defer close(responseChan)
+	for response := range rc {
+		defer close(rc)
 		return response, nil
 	}
 	return Response{nil, nil},

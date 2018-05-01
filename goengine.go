@@ -5,7 +5,7 @@
 // Reducers accordingly. Engine state is a map which uses StateKeys to look up
 // data, and each Reducer is assigned its own StateKey.
 
-package engine
+package goengine
 
 import (
 	"sync"
@@ -85,14 +85,23 @@ func (e *Engine) Run() {
 	}()
 }
 
-// ActAsync() creates an Action and feeds it into ActionChan. This
+// Act() creates an Action and feeds it into ActionChan. This
 // asynchronously and indirectly causes the appropriate ReducerFunc to be
 // dispacted by the Engine's mainloop.
-func (e *Engine) ActAsync(rk ReducerKey, data interface{}) chan Response {
+func (e *Engine) Act(rk ReducerKey, data interface{}) chan Response {
 	rc := make(chan Response)
 	a := Action{ReducerKey: rk, Data: data, ResponseChan: rc}
 	e.ActionChan <- a
 	return a.ResponseChan
+}
+
+// ActAndCloseRes() is a convenience function when you don't need to do
+// anything with the response returned by Act().
+func (e *Engine) ActAndCloseRes(rk ReducerKey, data interface{}) {
+	responseChan := e.Act(rk, data)
+	for _ = range responseChan {
+		close(responseChan)
+	}
 }
 
 // Get() returns a copy of the section of the state denoted by @sk.

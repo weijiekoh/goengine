@@ -1,7 +1,6 @@
 package goengine
 
 import (
-	//"log"
 	"reflect"
 	"sort"
 	"testing"
@@ -29,7 +28,7 @@ func TestStoreNums(t *testing.T) {
 	// For each number, make the engine dispatch storeNum() to store the number
 	// in the state.
 	for _, val := range vals {
-		engine.ActAndCloseRes(numsRk, val)
+		engine.Act(numsRk, val)
 	}
 
 	// Use the given StateKey to fetch data from the engine state
@@ -61,11 +60,8 @@ func TestIncrementNums(t *testing.T) {
 
 	result := make([]int, 0)
 	for _, val := range vals {
-		responseChan := engine.Act(rk, val)
-		for response := range responseChan {
-			result = append(result, response.Data.(int))
-			close(responseChan)
-		}
+		response, _ := engine.Act(rk, val)
+		result = append(result, response.Data.(int))
 	}
 
 	sort.Ints(result)

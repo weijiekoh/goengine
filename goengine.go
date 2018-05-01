@@ -8,6 +8,7 @@
 package goengine
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -85,23 +86,21 @@ func (e *Engine) Run() {
 	}()
 }
 
-// Act() creates an Action and feeds it into ActionChan. This
-// asynchronously and indirectly causes the appropriate ReducerFunc to be
-// dispacted by the Engine's mainloop.
-func (e *Engine) Act(rk ReducerKey, data interface{}) chan Response {
+func (e *Engine) feedAction(rk ReducerKey, data interface{}) chan Response {
 	rc := make(chan Response)
 	a := Action{ReducerKey: rk, Data: data, ResponseChan: rc}
 	e.ActionChan <- a
 	return a.ResponseChan
 }
 
-// ActAndCloseRes() is a convenience function when you don't need to do
-// anything with the response returned by Act().
-func (e *Engine) ActAndCloseRes(rk ReducerKey, data interface{}) {
-	responseChan := e.Act(rk, data)
-	for _ = range responseChan {
-		close(responseChan)
+func (e *Engine) Act(rk ReducerKey, data interface{}) (Response, error) {
+	responseChan := e.feedAction(rk, data)
+	for response := range responseChan {
+		defer close(responseChan)
+		return response, nil
 	}
+	return Response{nil, nil},
+		errors.New("Unable to return a response from responseChan")
 }
 
 // Get() returns a copy of the section of the state denoted by @sk.
@@ -111,7 +110,7 @@ func (e *Engine) Get(sk StateKey) interface{} {
 	return e.State[sk]
 }
 
-// Set() replaces the state denoted by @sk with @data.
+// set() replaces the state denoted by @sk with @data.
 func (e *Engine) Set(sk StateKey, data interface{}) {
 	e.Mux.RLock()
 	e.State[sk] = data

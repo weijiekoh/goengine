@@ -8,8 +8,9 @@ pattern](https://en.wikipedia.org/wiki/Reactor_pattern).
 
 To achieve this, Goengine uses a main loop which listens for instructions
 ("Actions") and dispatches handlers ("Reducers") accordingly. State is
-protected by a `RWMutex`. The result from a handler function flows from the
-event loop via a channel. All these details are abstracted away from the user.
+protected by a [`RWMutex`](https://golang.org/pkg/sync/#RWMutex). The result
+from a handler function flows from the event loop via a channel. All these
+details are abstracted away from the user.
 
 Goengine is not ready for production. In particular, it needs to be
 stress-tested to verify that it does not suffer from race conditions.

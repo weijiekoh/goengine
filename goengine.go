@@ -86,11 +86,16 @@ func (e *Engine) Run() {
 	}()
 }
 
-// Act() triggers the ReducerFunc denoted by the given reducer key.
-func (e *Engine) Act(rk ReducerKey, data interface{}) (Response, error) {
+func (e *Engine) ActAsync(rk ReducerKey, data interface{}) chan Response {
 	rc := make(chan Response)
 	a := Action{ReducerKey: rk, Data: data, ResponseChan: rc}
 	e.ActionChan <- a
+	return rc
+}
+
+// Act() triggers the ReducerFunc denoted by the given reducer key.
+func (e *Engine) Act(rk ReducerKey, data interface{}) (Response, error) {
+	rc := e.ActAsync(rk, data)
 	for response := range rc {
 		defer close(rc)
 		return response, nil
@@ -108,7 +113,11 @@ func (e *Engine) Get(sk StateKey) interface{} {
 
 // set() replaces the state denoted by @sk with @data.
 func (e *Engine) Set(sk StateKey, data interface{}) {
-	e.Mux.RLock()
+	e.Mux.Lock()
 	e.State[sk] = data
-	e.Mux.RUnlock()
+	e.Mux.Unlock()
+}
+
+func (e *Engine) UnsafeSet(sk StateKey, data interface{}) {
+	e.State[sk] = data
 }

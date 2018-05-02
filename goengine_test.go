@@ -1,9 +1,11 @@
 package goengine
 
 import (
+	//"log"
 	"reflect"
 	"sort"
 	"testing"
+	"time"
 )
 
 func storeNum(eng *Engine, sk StateKey, num interface{}) Response {
@@ -69,4 +71,61 @@ func TestIncrementNums(t *testing.T) {
 	if !reflect.DeepEqual(result, expected) {
 		t.Error("Something went wrong when incrementing nums")
 	}
+}
+
+func collectNums(eng *Engine, sk StateKey, numsSk interface{}) Response {
+	//log.Println("Collecting...")
+	collected := make([]int, 0)
+	for i := 0; i < 100; i++ {
+		val := eng.Get(numsSk.(StateKey)).(int)
+		collected = append(collected, val)
+		//log.Println("Collected:", val)
+		sleepDuration, _ := time.ParseDuration("8ms")
+		time.Sleep(sleepDuration)
+	}
+	//log.Println("Collected")
+	return Response{Data: collected, Err: nil}
+}
+
+func modifyNums(eng *Engine, sk StateKey, data interface{}) Response {
+	go func() {
+		//log.Println("Modifying...")
+		for i := 0; i < 100; i++ {
+			eng.Mux.Lock()
+
+			eng.UnsafeSet(sk, i)
+			//log.Println("Modified:", i)
+			sleepDuration, _ := time.ParseDuration("10ms")
+			time.Sleep(sleepDuration)
+			//log.Println("Reset")
+			eng.UnsafeSet(sk, 0)
+
+			eng.Mux.Unlock()
+		}
+		//log.Println("Modified")
+	}()
+	return Response{nil, nil}
+}
+
+func TestAtomicity(t *testing.T) {
+	engine := BuildEngine()
+	engine.Run()
+	modifySk, modifyRk := engine.Register(0, modifyNums)
+	_, collectRk := engine.Register(0, collectNums)
+
+	engine.Act(modifyRk, nil)
+	collectResponse, _ := engine.Act(collectRk, modifySk)
+	collected := collectResponse.Data.([]int)
+
+	if len(collected) != 100 {
+		t.Error("Concurrent read/write failed")
+	}
+
+	for _, val := range collected {
+		if val != 0 {
+			t.Error("Concurrent read/write failed")
+		}
+	}
+	//for {
+	//}
 }

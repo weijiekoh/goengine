@@ -62,7 +62,7 @@ func TestIncrementNums(t *testing.T) {
 
 	result := make([]int, 0)
 	for _, val := range vals {
-		response, _ := engine.Act(rk, val)
+		response := engine.Act(rk, val)
 		result = append(result, response.Data.(int))
 	}
 
@@ -124,7 +124,7 @@ func TestAtomicity(t *testing.T) {
 	// collectNums will read the state num every 8ms. Since modifyNums is
 	// atomic, the state num that collectNums reads should always be 0.
 	engine.Act(modifyRk, nil)
-	collectResponse, _ := engine.Act(collectRk, modifySk)
+	collectResponse := engine.Act(collectRk, modifySk)
 
 	collected := collectResponse.Data.([]int)
 

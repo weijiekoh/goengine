@@ -8,7 +8,6 @@
 package goengine
 
 import (
-	"errors"
 	"sync"
 )
 
@@ -94,14 +93,13 @@ func (e *Engine) ActAsync(rk ReducerKey, data interface{}) chan Response {
 }
 
 // Act() triggers the ReducerFunc denoted by the given reducer key.
-func (e *Engine) Act(rk ReducerKey, data interface{}) (Response, error) {
+func (e *Engine) Act(rk ReducerKey, data interface{}) Response {
 	rc := e.ActAsync(rk, data)
 	for response := range rc {
 		defer close(rc)
-		return response, nil
+		return response
 	}
-	return Response{nil, nil},
-		errors.New("Unable to return a response from responseChan")
+	return Response{nil, nil}
 }
 
 // Get() returns a copy of the section of the state denoted by @sk.

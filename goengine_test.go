@@ -73,6 +73,7 @@ func TestIncrementNums(t *testing.T) {
 	}
 }
 
+// collectNums reads the state num every 8ms.
 func collectNums(eng *Engine, sk StateKey, numsSk interface{}) Response {
 	//log.Println("Collecting...")
 	collected := make([]int, 0)
@@ -87,6 +88,7 @@ func collectNums(eng *Engine, sk StateKey, numsSk interface{}) Response {
 	return Response{Data: collected, Err: nil}
 }
 
+// modifyNums writes to the state num every 10ms in an atomic fashion.
 func modifyNums(eng *Engine, sk StateKey, data interface{}) Response {
 	go func() {
 		//log.Println("Modifying...")
@@ -112,11 +114,18 @@ func modifyNums(eng *Engine, sk StateKey, data interface{}) Response {
 func TestAtomicity(t *testing.T) {
 	engine := BuildEngine()
 	engine.Run()
+
 	modifySk, modifyRk := engine.Register(0, modifyNums)
 	_, collectRk := engine.Register(0, collectNums)
 
+	// modifyNums will change the state num, wait 10ms, and reset it to 0.
+	// These two operations should be atomic because of Lock() and Unlock().
+
+	// collectNums will read the state num every 8ms. Since modifyNums is
+	// atomic, the state num that collectNums reads should always be 0.
 	engine.Act(modifyRk, nil)
 	collectResponse, _ := engine.Act(collectRk, modifySk)
+
 	collected := collectResponse.Data.([]int)
 
 	if len(collected) != 100 {
@@ -128,6 +137,4 @@ func TestAtomicity(t *testing.T) {
 			t.Error("Concurrent read/write failed")
 		}
 	}
-	//for {
-	//}
 }

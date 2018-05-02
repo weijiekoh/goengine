@@ -111,7 +111,7 @@ func (e *Engine) Get(sk StateKey) interface{} {
 	return e.State[sk]
 }
 
-// set() replaces the state denoted by @sk with @data.
+// Set() replaces the state denoted by @sk with @data.
 func (e *Engine) Set(sk StateKey, data interface{}) {
 	e.Mux.Lock()
 	e.State[sk] = data

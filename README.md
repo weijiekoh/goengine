@@ -6,10 +6,9 @@ post](https://blog.mozilla.org/services/2014/03/12/sane-concurrency-with-go/)
 Rob Miller from Mozilla, as well as the [Reactor
 pattern](https://en.wikipedia.org/wiki/Reactor_pattern).
 
-The idea behind Goengine is that in order to prevent race conditions, only one
-goroutine should write to global state. To achieve this, Goengine uses a main
-loop which listens for instructions ("Actions") and dispatches handlers
-("Reducers") accordingly. The result from a handler function flows from the
+To achieve this, Goengine uses a main loop which listens for instructions
+("Actions") and dispatches handlers ("Reducers") accordingly. State is
+protected by a `RWMutex`. The result from a handler function flows from the
 event loop via a channel. All these details are abstracted away from the user.
 
 Goengine is not ready for production. In particular, it needs to be

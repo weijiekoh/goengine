@@ -107,6 +107,8 @@ func modifyNums(eng *Engine, sk StateKey, data interface{}) Response {
 	return Response{nil, nil}
 }
 
+// TestAtomicity runs two handlers to test whether the engine state mutex
+// correctly prevents race conditions.
 func TestAtomicity(t *testing.T) {
 	engine := BuildEngine()
 	engine.Run()
